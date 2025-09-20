@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FRA Atlas Demo</title>
+  <meta charset="utf-8"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #fdfdfd; }
+    #controls { padding: 12px; background: #f8f9fa; border-bottom: 1px solid #ccc; }
+    #main { display: flex; }
+    #map { flex: 2; height: 88vh; }
+    #preview { flex: 1; padding: 10px; overflow-y: auto; border-left: 1px solid #ccc; background: #fff; }
+    #preview img { max-width: 100%; margin-bottom: 10px; border: 1px solid #ddd; }
+    button { margin-top: 6px; padding: 6px 14px; cursor: pointer; border: none; background: #28a745; color: white; border-radius: 4px; }
+    button:hover { background: #218838; }
+    #status { margin-top: 8px; font-weight: bold; }
+    #legend { margin-top: 15px; font-size: 14px; }
+    .legend-item { display: flex; align-items: center; margin-bottom: 4px; }
+    .legend-color { width: 18px; height: 18px; margin-right: 6px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <h2>🌳 FRA Atlas AI + WebGIS Demo</h2>
+    <form id="uploadForm">
+      <input type="file" id="imageInput" name="image" accept=".jpg,.jpeg,.png,.tif,.tiff"/>
+      <button type="submit">Upload & Classify</button>
+    </form>
+    <p id="status">Upload a forest/satellite image (JPEG/PNG/GeoTIFF).</p>
+  </div>
+
+  <div id="main">
+    <div id="map"></div>
+    <div id="preview">
+      <h3>Preview</h3>
+      <p>Original image and segmentation will appear here.</p>
+      <div id="legend">
+        <h4>Legend</h4>
+        <div class="legend-item"><div class="legend-color" style="background:#C8C8C8;"></div>Background</div>
+        <div class="legend-item"><div class="legend-color" style="background:#A0522D;"></div>Ground</div>
+        <div class="legend-item"><div class="legend-color" style="background:#228B22;"></div>Vegetation</div>
+        <div class="legend-item"><div class="legend-color" style="background:#00FF00;"></div>Trees</div>
+        <div class="legend-item"><div class="legend-color" style="background:#87CEEB;"></div>Sky</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    var map = L.map('map').setView([20.59, 78.96], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    var claimParcel = {
+        "type": "Feature",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [[[78.95,20.58],[78.97,20.58],[78.97,20.60],[78.95,20.60],[78.95,20.58]]]
+        }
+    };
+    L.geoJSON(claimParcel, {color:"red", weight:2}).addTo(map);
+
+    document.getElementById("uploadForm").onsubmit = async function(e) {
+      e.preventDefault();
+      document.getElementById("status").innerText = "⏳ Processing image...";
+      let formData = new FormData();
+      formData.append("image", document.getElementById("imageInput").files[0]);
+
+      let response = await fetch("/classify", {method: "POST", body: formData});
+      let result = await response.json();
+
+      if (result.mask) {
+        if (window.maskLayer) map.removeLayer(window.maskLayer);
+        let bounds = result.bounds || [[19.5,77.5],[21.5,80.5]];
+        window.maskLayer = L.imageOverlay("data:image/png;base64," + result.mask, bounds, {opacity:0.6}).addTo(map);
+        map.fitBounds(bounds);
+
+        document.getElementById("preview").innerHTML = `
+          <h3>Preview</h3>
+          <p><b>Original Image</b></p>
+          <img src="data:image/png;base64,${result.original}" />
+          <p><b>Segmentation Result</b></p>
+          <img src="data:image/png;base64,${result.mask}" />
+          <a download="segmentation.png" href="data:image/png;base64,${result.mask}">
+            <button>⬇ Download Result</button>
+          </a>
+          ${document.getElementById("legend").outerHTML}
+        `;
+
+        document.getElementById("status").innerText = "✅ Segmentation overlay added.";
+      } else {
+        document.getElementById("status").innerText = "❌ Failed to classify image.";
+      }
+    }
+  </script>
+</body>
+</html>
