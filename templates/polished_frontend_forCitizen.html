@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VanAdhikar - Government of Odisha</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --odisha-saffron: #FF9933;
+            --odisha-white: #FFFFFF;
+            --odisha-green: #138808;
+            --odisha-blue: #000080;
+            --odisha-light-green: #E8F5E8;
+            --forest-dark: #1B4332;
+            --forest-medium: #2D6A4F;
+            --forest-light: #74C69D;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--odisha-light-green) 0%, #F8F9FA 100%);
+            color: #333;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--odisha-saffron) 0%, var(--odisha-blue) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .govt-header {
+            background: var(--odisha-green);
+            color: white;
+            padding: 0.5rem 0;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-img {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--odisha-saffron);
+            font-weight: bold;
+        }
+
+        .title-section h1 {
+            font-size: 1.8rem;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .title-section p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        /* User Profile */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(255,255,255,0.1);
+            padding: 0.8rem 1.2rem;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--forest-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--forest-dark);
+        }
+
+        .user-details h6 {
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        .user-details small {
+            opacity: 0.8;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            grid-template-rows: 1fr;
+            gap: 1.5rem;
+            padding: 2rem;
+            align-items: stretch;
+            min-height: calc(100vh - 250px);
+        }
+
+        /* Left Panel */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            min-height: 100%;
+        }
+
+        /* Center Panel */
+        .center-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            min-height: 100%;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            min-height: 100%;
+        }
+
+        /* Make the last cards in each panel flex to fill remaining space */
+        .left-panel > .card:last-child,
+        .right-panel > .card:last-child {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .left-panel > .card:last-child .card-body,
+        .right-panel > .card:last-child .card-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+            height: fit-content;
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--forest-dark) 0%, var(--forest-medium) 100%);
+            color: white;
+            border: none;
+            padding: 1rem 1.5rem;
+        }
+
+        .card-header h5 {
+            margin: 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Map Container */
+        .map-container {
+            height: 500px;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .map-overlay {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.95);
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-width: 200px;
+        }
+
+        /* Statistics Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--forest-light) 0%, var(--forest-medium) 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Progress Bars */
+        .progress {
+            height: 8px;
+            border-radius: 10px;
+            margin: 0.5rem 0;
+        }
+
+        .progress-bar {
+            border-radius: 10px;
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 250px;
+            padding: 1rem;
+        }
+
+        /* Benefits Cards */
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--odisha-light-green);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .benefit-item:hover {
+            background: var(--forest-light);
+            transform: translateX(5px);
+        }
+
+        .benefit-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--forest-dark);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .benefit-details h6 {
+            margin: 0;
+            color: var(--forest-dark);
+        }
+
+        .benefit-details small {
+            color: #666;
+        }
+
+        /* NTFP Calendar */
+        .ntfp-calendar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .ntfp-month {
+            padding: 0.8rem;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .ntfp-active {
+            background: var(--forest-medium);
+            color: white;
+        }
+
+        .ntfp-inactive {
+            background: #E9ECEF;
+            color: #6C757D;
+        }
+
+        /* Document Status */
+        .doc-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-approved { background: #D4E7DD; color: #0F5132; }
+        .status-pending { background: #FFF3CD; color: #664D03; }
+        .status-processing { background: #D1ECF1; color: #055160; }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header .container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .logo-section {
+                justify-content: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .ntfp-calendar {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Animation Classes */
+        .fade-in {
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--forest-medium);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--forest-dark);
+        }
+
+        /* Footer */
+        .footer {
+            background: transparent;
+        }
+
+        /* Equal height panels */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            grid-template-rows: 1fr;
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .left-panel,
+        .center-panel, 
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Make the last cards in each panel flex to fill remaining space */
+        .left-panel > .card:last-child,
+        .right-panel > .card:last-child {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .left-panel > .card:last-child .card-body,
+        .right-panel > .card:last-child .card-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <!-- Government Header -->
+    <div class="govt-header">
+        <i class="fas fa-leaf"></i> Ministry of Tribal Affairs - Forest Rights Authority 
+    </div>
+
+    <!-- Main Header -->
+    <header class="header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="logo-section">
+                        <div class="logo-img">
+                            <i class="fas fa-tree"></i>
+                        </div>
+                        <div class="title-section">
+                            <h1>VanAdhikar & WebGIS DSS</h1>
+                            <p>Forest Rights Act Implementation Monitoring System</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="user-profile">
+                        <div class="user-avatar">RB</div>
+                        <div class="user-details">
+                            <h6>Ramesh Bhatra</h6>
+                            <small><i class="fas fa-map-marker-alt"></i> Mayurbhanj, Odisha</small>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-link text-white" data-bs-toggle="dropdown">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-user"></i> Profile</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-file-alt"></i> My Claims</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard -->
+    <div class="dashboard-grid">
+        <!-- Left Panel -->
+        <div class="left-panel">
+            <!-- User Land Details -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h5><i class="fas fa-map"></i> My Land Rights (IFR)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-muted">Plot Details</h6>
+                        <p><strong>Survey No:</strong> 156/P1<br>
+                        <strong>Area:</strong> 2.3 Acres<br>
+                        <strong>Village:</strong> Jenabil<br>
+                        <strong>Block:</strong> Jashipur<br>
+                        <strong>District:</strong> Mayurbhanj</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-muted">Claim Status</h6>
+                        <div class="doc-status status-approved">
+                            <i class="fas fa-check-circle"></i> Title Approved
+                        </div>
+                        <small class="text-muted">Approved on: 15th March 2024</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6 class="text-muted">Forest Cover Analysis</h6>
+                        <div class="progress-item mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>Sal Forest</span>
+                                <span>65%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" style="width: 65%"></div>
+                            </div>
+                        </div>
+                        <div class="progress-item mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>Agricultural Land</span>
+                                <span>25%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" style="width: 25%"></div>
+                            </div>
+                        </div>
+                        <div class="progress-item">
+                            <div class="d-flex justify-content-between">
+                                <span>Settlement</span>
+                                <span>10%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-info" style="width: 10%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NTFP Rights -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h5><i class="fas fa-seedling"></i> NTFP Collection Rights</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-muted">Authorized Products</h6>
+                        <div class="benefit-item">
+                            <div class="benefit-icon">
+                                <i class="fas fa-leaf"></i>
+                            </div>
+                            <div class="benefit-details">
+                                <h6>Sal Leaves (Siali)</h6>
+                                <small>Peak Season: Mar-Jun</small>
+                            </div>
+                        </div>
+                        <div class="benefit-item">
+                            <div class="benefit-icon">
+                                <i class="fas fa-apple-alt"></i>
+                            </div>
+                            <div class="benefit-details">
+                                <h6>Mahua Flowers</h6>
+                                <small>Peak Season: Feb-Apr</small>
+                            </div>
+                        </div>
+                        <div class="benefit-item">
+                            <div class="benefit-icon">
+                                <i class="fas fa-cannabis"></i>
+                            </div>
+                            <div class="benefit-details">
+                                <h6>Kendu Leaves</h6>
+                                <small>Peak Season: Apr-Jun</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6 class="text-muted">Collection Calendar</h6>
+                        <div class="ntfp-calendar">
+                            <div class="ntfp-month ntfp-inactive">Jan</div>
+                            <div class="ntfp-month ntfp-active">Feb</div>
+                            <div class="ntfp-month ntfp-active">Mar</div>
+                            <div class="ntfp-month ntfp-active">Apr</div>
+                            <div class="ntfp-month ntfp-active">May</div>
+                            <div class="ntfp-month ntfp-active">Jun</div>
+                            <div class="ntfp-month ntfp-inactive">Jul</div>
+                            <div class="ntfp-month ntfp-inactive">Aug</div>
+                            <div class="ntfp-month ntfp-inactive">Sep</div>
+                            <div class="ntfp-month ntfp-inactive">Oct</div>
+                            <div class="ntfp-month ntfp-inactive">Nov</div>
+                            <div class="ntfp-month ntfp-inactive">Dec</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Panel - Map and Atlas -->
+        <div class="center-panel">
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h5><i class="fas fa-satellite"></i> VanAdhikar - Mayurbhanj Forest Division</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="map-container">
+                        <div id="map"></div>
+                        <div class="map-overlay">
+                            <h6 class="mb-2">Legend</h6>
+                            <div class="d-flex align-items-center mb-1">
+                                <div style="width: 15px; height: 15px; background: #228B22; margin-right: 8px; border-radius: 2px;"></div>
+                                <small>Dense Forest</small>
+                            </div>
+                            <div class="d-flex align-items-center mb-1">
+                                <div style="width: 15px; height: 15px; background: #90EE90; margin-right: 8px; border-radius: 2px;"></div>
+                                <small>Open Forest</small>
+                            </div>
+                            <div class="d-flex align-items-center mb-1">
+                                <div style="width: 15px; height: 15px; background: #FF4444; margin-right: 8px; border-radius: 2px;"></div>
+                                <small>My Land (IFR)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards below map -->
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <!-- Monthly Income Tracker -->
+                    <div class="card fade-in">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-line"></i> Income from NTFP</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="incomeChart"></canvas>
+                            </div>
+                            <div class="text-center mt-3 mb-4">
+                                <small class="text-muted">Total Annual Income: ₹48,500</small>
+                            </div>
+                            
+                            <!-- Monthly Breakdown -->
+                            <div class="mb-3">
+                                <h6 class="text-muted">Monthly Income Breakdown</h6>
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="p-2 bg-light rounded">
+                                            <strong>₹15,200</strong>
+                                            <br><small>Peak (April)</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 bg-light rounded">
+                                            <strong>₹8,100</strong>
+                                            <br><small>Average</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 bg-light rounded">
+                                            <strong>₹2,100</strong>
+                                            <br><small>Off-season</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Product-wise Income -->
+                            <div class="mb-3">
+                                <h6 class="text-muted">Product-wise Annual Income</h6>
+                                <div class="progress-item mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Sal Leaves</span>
+                                        <span>₹28,500 (59%)</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" style="width: 59%"></div>
+                                    </div>
+                                </div>
+                                <div class="progress-item mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Kendu Leaves</span>
+                                        <span>₹12,800 (26%)</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" style="width: 26%"></div>
+                                    </div>
+                                </div>
+                                <div class="progress-item mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Mahua Flowers</span>
+                                        <span>₹7,200 (15%)</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info" style="width: 15%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Market Information -->
+                            <div class="mb-3">
+                                <h6 class="text-muted">Current Market Rates</h6>
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <div class="border rounded p-2">
+                                            <strong>₹45/kg</strong>
+                                            <br><small class="text-success">Sal Leaves</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="border rounded p-2">
+                                            <strong>₹38/kg</strong>
+                                            <br><small class="text-warning">Kendu Leaves</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Targets -->
+                            <div>
+                                <h6 class="text-muted">Annual Targets vs Achievement</h6>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Target: ₹50,000</span>
+                                    <span>97% achieved</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" style="width: 97%"></div>
+                                </div>
+                                <small class="text-muted">Remaining: ₹1,500 (3 months left)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <!-- Recent Activities -->
+                    <div class="card fade-in">
+                        <div class="card-header">
+                            <h5><i class="fas fa-bell"></i> Recent Activities</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline">
+                                <div class="d-flex mb-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            <i class="fas fa-check text-white fa-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-1">Land Survey Completed</h6>
+                                        <small class="text-muted">Your plot surveyed on Sept 18, 2025</small>
+                                        <br><small class="text-success">✓ GPS coordinates recorded</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex mb-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            <i class="fas fa-upload text-white fa-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-1">Documents Uploaded</h6>
+                                        <small class="text-muted">Aadhaar & Ration Card verified</small>
+                                        <br><small class="text-primary">✓ Approved by Block Officer</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex mb-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            <i class="fas fa-clock text-white fa-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-1">NTFP Season Started</h6>
+                                        <small class="text-muted">Sal leaf collection permitted</small>
+                                        <br><small class="text-warning">⏰ Valid till June 30, 2026</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex mb-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-info rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            <i class="fas fa-money-bill-wave text-white fa-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-1">Payment Received</h6>
+                                        <small class="text-muted">₹8,500 for August collection</small>
+                                        <br><small class="text-info">💰 Bank transfer completed</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex mb-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            <i class="fas fa-user-friends text-white fa-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-1">Community Meeting</h6>
+                                        <small class="text-muted">Village Gram Sabha held</small>
+                                        <br><small class="text-secondary">📅 Next meeting: Oct 15, 2025</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex mb-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            <i class="fas fa-certificate text-white fa-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-1">Training Completed</h6>
+                                        <small class="text-muted">Sustainable harvesting methods</small>
+                                        <br><small class="text-dark">🎓 Certificate issued</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex mb-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            <i class="fas fa-exclamation-triangle text-white fa-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-1">Weather Alert</h6>
+                                        <small class="text-muted">Heavy rain forecast next week</small>
+                                        <br><small class="text-danger">⚠️ Avoid forest during storms</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border: 2px solid #dee2e6;">
+                                            <i class="fas fa-calendar text-muted fa-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-1">Upcoming Renewal</h6>
+                                        <small class="text-muted">NTFP permit expires in 6 months</small>
+                                        <br><small class="text-muted">📋 Renewal process starts in March</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right-panel">
+            <!-- FRA Benefits -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h5><i class="fas fa-gift"></i> Your FRA Benefits</h5>
+                </div>
+                <div class="card-body">
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-home"></i>
+                        </div>
+                        <div class="benefit-details">
+                            <h6>Land Title Rights</h6>
+                            <small>Section 3(1)(a) - Individual Forest Rights</small>
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-tree"></i>
+                        </div>
+                        <div class="benefit-details">
+                            <h6>Forest Produce Rights</h6>
+                            <small>Section 3(1)(c) - NTFP Collection & Use</small>
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="benefit-details">
+                            <h6>Protection from Eviction</h6>
+                            <small>Legal protection under FRA 2006</small>
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <div class="benefit-details">
+                            <h6>Government Schemes</h6>
+                            <small>KALIA, PMAY, Subsidies eligible</small>
+                        </div>
+                    </div>
+
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="benefit-details">
+                            <h6>NTFP Fair Price</h6>
+                            <small>Minimum Support Price guaranteed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- District Statistics -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-bar"></i> Mayurbhanj FRA Progress</h5>
+                </div>
+                <div class="card-body">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-number">1,247</span>
+                            <span class="stat-label">Claims Approved</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number">89%</span>
+                            <span class="stat-label">Success Rate</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number">15,684</span>
+                            <span class="stat-label">Hectares Titled</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number">342</span>
+                            <span class="stat-label">Villages Covered</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h6 class="text-muted">Forest Cover Distribution</h6>
+                        <div class="chart-container">
+                            <canvas id="forestCoverChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-2">
+        <div class="container text-center py-2">
+            <div style="background: linear-gradient(135deg, var(--forest-dark) 0%, var(--forest-medium) 100%); color: white; padding: 1rem 0; border-radius: 10px;">
+                <h6 class="mb-1"><i class="fas fa-code"></i> Developed by Team Init to Win it       </h6>
+                <p class="mb-0 opacity-75">Smart India Hackathon 2025 | VanAdhikar & WebGIS DSS</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Initialize Map
+        const map = L.map('map').setView([21.9, 86.4], 10); // Mayurbhanj coordinates
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Add forest cover layers
+        const denseForest = L.polygon([
+            [21.95, 86.35], [21.98, 86.42], [21.92, 86.45], [21.88, 86.38]
+        ], {color: '#228B22', fillOpacity: 0.6}).addTo(map);
+        
+        const openForest = L.polygon([
+            [21.85, 86.40], [21.90, 86.48], [21.82, 86.50], [21.78, 86.42]
+        ], {color: '#90EE90', fillOpacity: 0.5}).addTo(map);
+
+        // User's land (IFR)
+        const userLand = L.polygon([
+            [21.9125, 86.4180], [21.9145, 86.4220], [21.9105, 86.4240], [21.9085, 86.4200]
+        ], {
+            color: '#FF4444', 
+            fillOpacity: 0.8,
+            weight: 3
+        }).addTo(map);
+        
+        userLand.bindPopup(`
+            <div class="p-2">
+                <h6><i class="fas fa-map-marker-alt"></i> Ramesh Bhatra's Land</h6>
+                <p class="mb-1"><strong>Survey No:</strong> 156/P1</p>
+                <p class="mb-1"><strong>Area:</strong> 2.3 Acres</p>
+                <p class="mb-1"><strong>Status:</strong> <span class="badge bg-success">Title Approved</span></p>
+                <small class="text-muted">Click to view details</small>
+            </div>
+        `);
+
+
+
+        // Income Chart
+        const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+        new Chart(incomeCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Monthly Income (₹)',
+                    data: [2100, 8500, 12800, 15200, 7800, 2100],
+                    borderColor: '#2D6A4F',
+                    backgroundColor: 'rgba(45, 106, 79, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Forest Cover Chart
+        const forestCtx = document.getElementById('forestCoverChart').getContext('2d');
+        new Chart(forestCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Dense Forest', 'Open Forest', 'Agricultural', 'Settlement'],
+                datasets: [{
+                    data: [45, 30, 20, 5],
+                    backgroundColor: ['#228B22', '#90EE90', '#DEB887', '#8B4513']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { fontSize: 10 } }
+                }
+            }
+        });
+
+
+
+        // Add fade-in animation to cards
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+
+        // Add pulse animation to important stats
+        document.querySelectorAll('.stat-number').forEach(el => {
+            el.classList.add('pulse');
+        });
+    </script>
+</body>
+</html>
